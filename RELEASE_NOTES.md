@@ -1,4 +1,14 @@
-# 磁盘空间分析助手 v0.1.0 — Windows MVP
+# 磁盘空间分析助手 / Disk Space Assistant v0.2.0
+
+新增可交互空间图：点击目录逐层查看，返回上级。清理候选支持按风险类别和路径筛选，展示判断依据和影响。保护系统/软件依赖/数据库路径，临时文件只作条件性建议。没有删除功能。新版本需重新扫描生成报告。
+
+New: interactive directory space maps, drill-down, category/path filters for cleanup candidates, reasons and impact. Protected system/dependency/database paths remain in the keep/unknown category. No deletion feature; rescan to create the new report.
+
+12 scanner tests passed; 1 environment-dependent hardlink test skipped. Earlier research documents removed from the current branch; retained in Git history.
+
+发布前验证：v0.2.0 命令行 EXE 成功扫描并生成新版报告；窗口 EXE 完成隐藏初始化自检（退出码 0）。尚未完成实际按钮交互与其他设备兼容性验证。
+
+Release checks: packaged CLI scan/report generation passed; desktop initialization self-test returned exit code 0. Full GUI interaction and other-device compatibility remain unverified.
 
 ## English
 
@@ -24,4 +34,4 @@ Unsigned MVP. CLI smoke-tested; desktop interaction and other-machine compatibil
 
 桌面版可在扫描期间保持窗口响应；关闭窗口会结束进程，不保存未完成结果。命令行版可用 Ctrl+C 保存部分统计。
 
-构建：Python + PyInstaller 6.11.1；面向构建机当前 Windows 架构。此预发布版本尚未在其他 Windows 设备验证，也未数字签名。
+构建：Python + PyInstaller 6.11.1；Windows x64。此预发布版本尚未在其他 Windows 设备验证，也未数字签名。

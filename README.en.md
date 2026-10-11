@@ -4,17 +4,20 @@
 
 A local disk space analyzer for any drive or folder. Find large files, directory totals and file-type usage, and generate an HTML report. Includes Windows desktop and command-line applications.
 
-**v0.1.0 MVP: read-only scanning. Suggestions use local rules; AI explanations are planned.**
+**v0.2.0 MVP: read-only scanning, interactive space maps and cleanup candidates. AI explanations are planned.**
 
 ## Download
 
-[Windows portable release](https://github.com/ada-c38f0bb79f/agent-runtime-research/releases/tag/v0.1.0)
+[Windows portable release](https://github.com/ada-c38f0bb79f/agent-runtime-research/releases/tag/v0.2.0)
 
 Extract and launch `DiskSpaceAssistant.exe`. Select a folder and report destination, then open the report after scanning. No Python installation is required. `DiskSpaceAssistantCLI.exe` is the command-line version.
 
 Built for Windows x64 and unsigned. Desktop interaction and compatibility on other machines have not yet been verified. The current interface and reports are in Chinese; English documentation is provided here.
 
 ## Features
+
+- Interactive directory drill-down and parent navigation.
+- Cleanup candidates filtered by category/path, with evidence and possible impact; no deletion approval or action.
 
 - Read-only iterative traversal, avoiding Python recursion limits.
 - Windows extended paths; symbolic links and reparse points are skipped.
@@ -44,8 +47,8 @@ Extension-based suggestions are not deletion approval. The application does not 
 
 ## Verification and roadmap
 
-Scanner tests: 9 passed, 1 hardlink test skipped due to the build environment. Coverage includes a simulated 1,500-level hierarchy, link cycles, totals, read failures, scan limits and HTML escaping. The packaged CLI was launched and used for a scan; desktop interaction has not yet been verified.
+Scanner tests: 12 passed, 1 hardlink test skipped due to the build environment. Coverage includes a simulated 1,500-level hierarchy, link cycles, totals, read failures, scan limits, directory maps, protected paths and HTML escaping.
 
 Next: AI explanations based on reviewed, redacted summaries, followed by user-confirmed cleanup.
 
-This repository shifted from Agent Runtime research to a runnable disk space analyzer; its name is retained. `PROJECT_DOCS/` and `PROJECT_MEMORY/` contain historical material. `file_helper.py` is an earlier demonstration. See [release notes](RELEASE_NOTES.md).
+This repository now maintains the disk space analyzer. Earlier research documents were removed from the current branch and remain recoverable in Git history. See [release notes](RELEASE_NOTES.md).

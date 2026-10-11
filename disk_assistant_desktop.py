@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 import queue
 import threading
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import webbrowser
@@ -12,7 +13,12 @@ from disk_assistant import scan, render_report, human_size
 
 def main():
     app = tk.Tk()
-    app.title('磁盘空间分析助手 v0.1.0')
+    if '--self-test' in sys.argv:
+        app.withdraw()
+        app.update()
+        app.destroy()
+        return
+    app.title('磁盘空间分析助手 v0.2.0')
     app.geometry('640x350')
     path = tk.StringVar()
     status = tk.StringVar(value='选择盘符或文件夹，完成后保存 HTML 报告。')

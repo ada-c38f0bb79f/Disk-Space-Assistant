@@ -4,17 +4,19 @@
 
 支持任意盘符或文件夹的本地空间分析工具。找出大文件、大目录和文件类型占用，生成中文 HTML 报告。提供 Windows 窗口版和命令行版。
 
-**v0.1.0 MVP：只读扫描；建议来自本地规则，AI 解释尚未接入。**
+**v0.2.0 MVP：只读扫描、可交互空间图和清理候选；AI 解释尚未接入。**
 
 ## 下载
 
-[下载 Windows 便携版](https://github.com/ada-c38f0bb79f/agent-runtime-research/releases/tag/v0.1.0)
+[下载 Windows 便携版](https://github.com/ada-c38f0bb79f/agent-runtime-research/releases/tag/v0.2.0)
 
 解压后双击 `DiskSpaceAssistant.exe`，选择目录与报告保存位置，扫描完成后点击“打开报告”。无需安装 Python。`DiskSpaceAssistantCLI.exe` 为命令行版。
 
 面向 Windows x64，未数字签名；窗口交互及其他设备兼容性尚未验证。
 
 ## 功能
+
+报告加入空间分布交互图：点击目录下钻、返回上级；候选文件可按风险类别和路径筛选。最大 200 个候选依据路径与后缀生成，显示判断理由与潜在影响；未确认可恢复性，不提供删除按钮。
 
 - 只读迭代遍历，避免 Python 递归层数限制。
 - Windows 长路径处理，跳过符号链接和重解析点。
@@ -44,8 +46,8 @@ python -m unittest -v test_disk_assistant
 
 ## 验证与计划
 
-扫描测试 9 项通过、1 项硬链接测试因环境限制跳过，包含模拟 1,500 层目录、链接循环、统计、读取错误、扫描上限及 HTML 转义。命令行 EXE 已实测运行；窗口交互尚未实测。
+扫描测试 12 项通过、1 项硬链接测试因环境限制跳过，包含模拟 1,500 层目录、链接循环、统计、读取错误、扫描上限、目录汇总、候选保护和 HTML 转义。
 
 下一步：基于用户确认和脱敏的扫描摘要加入 AI 解释，再考虑确认后的清理。
 
-项目已从 Agent Runtime 研究转向磁盘空间分析工具；仓库名称暂保留。`PROJECT_DOCS/`、`PROJECT_MEMORY/` 为历史材料，`file_helper.py` 为早期演示。详见 [Release 说明](RELEASE_NOTES.md)。
+仓库只维护当前产品。旧研究材料已从当前分支移除，可从 Git 历史找回。详见 [Release 说明](RELEASE_NOTES.md)。

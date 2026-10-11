@@ -30,6 +30,18 @@ def advice(path):
     return "用途尚不确定；检查所属软件或内容后再决定。"
 
 
+def cleanup_assessment(path):
+    parts = {p.lower() for p in path.replace('\\', '/').split('/')}
+    suffix = Path(path).suffix.lower()
+    if parts & {'windows', 'program files', 'program files (x86)', '.git', 'site-packages'} or suffix in {'.dll', '.sys', '.pyd', '.db', '.sqlite', '.vhd', '.vhdx'}:
+        return {'level': 'keep', 'label': '建议保留 / 用途未知', 'reason': '系统、软件依赖、数据库或磁盘镜像线索。', 'impact': '删除可能破坏软件、系统或数据；优先使用所属软件管理功能。'}
+    if parts & {'temp', 'tmp', 'cache', 'caches'} and suffix in {'.tmp', '.log'}:
+        return {'level': 'review', 'label': '可考虑清理（有条件）', 'reason': '临时目录与后缀线索，未验证是否正在使用。', 'impact': '先关闭所属程序并使用其清理功能；可能丢失日志或未保存数据。'}
+    if suffix in {'.zip', '.rar', '.7z', '.iso', '.exe', '.msi', '.mp4', '.mov', '.mkv', '.avi'}:
+        return {'level': 'confirm', 'label': '需要你确认', 'reason': '安装包、归档或视频后缀，仅识别候选用途。', 'impact': '确认已安装、有备份或不再需要；删除会失去这份文件。'}
+    return {'level': 'keep', 'label': '建议保留 / 用途未知', 'reason': '缺少足够证据证明可清理。', 'impact': '先确认内容与所属程序；无法判断备份或恢复能力。'}
+
+
 def io_path(path):
     """Use Windows extended paths for IO, keep readable paths in reports."""
     if os.name != "nt" or path.startswith("\\\\?\\"):
@@ -54,6 +66,7 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
     totals = Counter()
     extensions = Counter()
     largest = []
+    candidates = []
     stack = [(root, 0)]
     visited = []
     samples = []
@@ -115,6 +128,11 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
                                 totals[current] += info.st_size
                                 extensions[Path(entry.name).suffix.lower() or "(无后缀)"] += info.st_size
                                 item = (info.st_size, path)
+                                if cleanup_assessment(path)['level'] != 'keep':
+                                    if len(candidates) < 200:
+                                        heapq.heappush(candidates, item)
+                                    elif item > candidates[0]:
+                                        heapq.heapreplace(candidates, item)
                                 if len(largest) < top:
                                     heapq.heappush(largest, item)
                                 elif item > largest[0]:
@@ -131,6 +149,7 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
         interrupted = True
 
     # Reverse traversal aggregates children into parents without recursion.
+    direct_totals = dict(totals)
     for current in reversed(visited):
         if current != root:
             totals[os.path.dirname(current)] += totals[current]
@@ -149,6 +168,9 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
                           for size, path in sorted(largest, reverse=True)],
         "largest_directories": [{"path": path, "bytes": size} for size, path in directories],
         "extensions": [{"extension": ext, "bytes": size} for ext, size in extensions.most_common()],
+        "directory_map": [{'path': p, 'parent': os.path.dirname(p) if p != root else None,
+                           'bytes': totals[p], 'direct_bytes': direct_totals.get(p, 0)} for p in visited],
+        "cleanup_candidates": [{'path': p, 'bytes': size, **cleanup_assessment(p)} for size, p in sorted(candidates, reverse=True)],
     }
 
 
@@ -163,6 +185,8 @@ def render_report(result):
         return f"<h2>{kind}</h2><table><tr><th>位置 / 类型</th><th>大小</th><th>检查建议</th></tr>" + "".join(rows) + "</table>"
     issues = "".join(f"<li>{html.escape(item['path'])}：{html.escape(item['error'])}</li>"
                      for item in result["error_samples"])
+    from report_visual import interactive_section
+    interactive = interactive_section(result)
     return f"""<!doctype html><html lang="zh-CN"><meta charset="utf-8">
 <title>磁盘空间分析助手</title><style>
 body{{font-family:Segoe UI,Microsoft YaHei,sans-serif;background:#f3f5f9;color:#18263c;max-width:1100px;margin:40px auto;padding:0 24px}}
@@ -174,6 +198,7 @@ table{{border-collapse:collapse;width:100%;font-size:14px}}td,th{{padding:12px;b
 <p>状态：{result['status']}；无法读取 {result['errors']} 项；跳过链接/重解析点 {result['skipped_links']} 项；硬链接去重 {result['duplicate_hardlinks']} 项。</p>
 <p>最深已扫描 {result.get('deepest_scanned', 0)} 层（根目录为 0）；深度限制跳过 {result.get('depth_skipped_directories', 0)} 个目录；待扫描 {result.get('pending_directories', 0)} 个目录；停止原因：{html.escape(result.get('stop_reason') or '正常结束')}。被跳过的目录大小未知，未计入总量。</p>
 <p>大小为可读取文件的逻辑字节数，不等于磁盘实际分配空间。目录大小包含子目录，排行各行不可相加。建议来自本地后缀规则，尚未接入 AI；不能作为删除许可。扫描过程中变化的文件可能造成统计偏差。</p></header>
+{interactive}
 <section>{table(result['largest_directories'], '大目录')}{table(result['largest_files'], '大文件')}{table(result['extensions'][:20], '文件类型占用')}</section>
 <section><h2>无法读取的位置（最多展示 50 项）</h2><ul>{issues or '<li>未记录读取错误</li>'}</ul></section></html>"""
 

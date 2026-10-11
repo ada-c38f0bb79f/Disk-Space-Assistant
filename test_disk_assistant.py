@@ -6,7 +6,7 @@ import stat
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from disk_assistant import scan, render_report
+from disk_assistant import scan, render_report, cleanup_assessment
 
 
 class ScanTests(unittest.TestCase):
@@ -51,8 +51,27 @@ class ScanTests(unittest.TestCase):
         result = scan(self.root)
         result['root'] = '<script>alert(1)</script>'
         report = render_report(result)
-        self.assertNotIn('<script>', report)
+        self.assertNotIn('<script>alert(1)</script>', report)
         self.assertIn('&lt;script&gt;', report)
+
+    def test_protected_location_beats_archive_suffix(self):
+        self.assertEqual(cleanup_assessment('C:/Windows/update.zip')['level'], 'keep')
+        self.assertEqual(cleanup_assessment('D:/Downloads/setup.exe')['level'], 'confirm')
+        self.assertEqual(cleanup_assessment('D:/Temp/debug.log')['level'], 'review')
+        self.assertEqual(cleanup_assessment('D:/work/data.db')['level'], 'keep')
+
+    def test_directory_map_uses_direct_and_subtree_sizes(self):
+        result = scan(self.root)
+        root = next(n for n in result['directory_map'] if n['parent'] is None)
+        self.assertEqual(root['bytes'], 8)
+        self.assertEqual(root['direct_bytes'], 3)
+
+    def test_candidate_and_script_escape(self):
+        (self.root / 'setup.zip').write_bytes(b'123')
+        result = scan(self.root)
+        self.assertEqual(result['cleanup_candidates'][0]['level'], 'confirm')
+        result['cleanup_candidates'][0]['path'] = '</script><script>alert(2)</script>'
+        self.assertNotIn('</script><script>alert(2)', render_report(result))
 
     def test_file_root_rejected(self):
         with self.assertRaises(ValueError):

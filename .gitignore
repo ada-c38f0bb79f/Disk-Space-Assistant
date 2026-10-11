@@ -28,3 +28,7 @@ Thumbs.db
 /preview-*.html
 /report-*.html
 /report-*.json
+/PROJECT_DOCS/
+/PROJECT_MEMORY/
+/file_helper.py
+/test_file_helper.py
