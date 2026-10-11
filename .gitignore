@@ -1,0 +1,23 @@
+/.venv-paper2agent/
+/output/
+/react-official/
+/Paper Read/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+.codex/
+.agents/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
