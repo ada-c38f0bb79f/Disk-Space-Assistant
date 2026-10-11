@@ -21,3 +21,10 @@ venv/
 .idea/
 Thumbs.db
 .DS_Store
+/disk_report_mvp.html
+/disk_report_mvp.json
+/build/
+/releases/
+/preview-*.html
+/report-*.html
+/report-*.json
