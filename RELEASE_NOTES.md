@@ -10,6 +10,8 @@
 
 验证：28 项 Python 测试通过，1 项硬链接测试因环境限制跳过；导出页面的清单关联、分页、筛选与详情逻辑通过。完整鼠标交互及真实多批 API 尚未验证。
 
+打包程序已通过启动与用户提供报告的导入自检（退出码 0）。
+
 ## English
 
 Redesigned desktop UI with a dark sidebar, light content panels, overview cards, prominent scan scope, directory-first navigation and drive-specific colors. Sidebar system disk usage is distinct from scanned logical bytes.
