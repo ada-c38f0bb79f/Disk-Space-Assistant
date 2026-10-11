@@ -20,20 +20,14 @@ def human_size(value):
 
 
 def advice(path):
-    suffix = Path(path).suffix.lower()
-    if suffix in {".zip", ".7z", ".rar", ".iso", ".exe", ".msi"}:
-        return "安装包或归档候选；先确认是否仍需保留，不能仅凭后缀判定可删。"
-    if suffix in {".mp4", ".mkv", ".mov", ".avi"}:
-        return "视频候选；检查是否需要保留，可考虑迁移到其他盘。"
-    if suffix in {".log", ".tmp"}:
-        return "日志或临时文件候选；确认所属程序和是否正在使用。"
-    return "用途尚不确定；检查所属软件或内容后再决定。"
+    assessment = cleanup_assessment(path)
+    return assessment['reason'] + assessment['impact']
 
 
 def cleanup_assessment(path):
     parts = {p.lower() for p in path.replace('\\', '/').split('/')}
     suffix = Path(path).suffix.lower()
-    if parts & {'windows', 'program files', 'program files (x86)', '.git', 'site-packages'} or suffix in {'.dll', '.sys', '.pyd', '.db', '.sqlite', '.vhd', '.vhdx'}:
+    if parts & {'windows', 'program files', 'program files (x86)', '.git', 'site-packages', '.codex', 'bin'} or suffix in {'.dll', '.sys', '.pyd', '.db', '.sqlite', '.vhd', '.vhdx'}:
         return {'level': 'keep', 'label': '建议保留 / 用途未知', 'reason': '系统、软件依赖、数据库或磁盘镜像线索。', 'impact': '删除可能破坏软件、系统或数据；优先使用所属软件管理功能。'}
     if parts & {'temp', 'tmp', 'cache', 'caches'} and suffix in {'.tmp', '.log'}:
         return {'level': 'review', 'label': '可考虑清理（有条件）', 'reason': '临时目录与后缀线索，未验证是否正在使用。', 'impact': '先关闭所属程序并使用其清理功能；可能丢失日志或未保存数据。'}
@@ -51,7 +45,7 @@ def io_path(path):
     return "\\\\?\\" + path
 
 
-def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max_files=None):
+def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max_files=None, index_path=None):
     if top < 1 or (max_depth is not None and max_depth < 0):
         raise ValueError("top 必须大于 0，max_depth 必须非负")
     if any(value is not None and value <= 0 for value in (max_seconds, max_files)):
@@ -63,6 +57,8 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
     if not stat.S_ISDIR(root_stat.st_mode):
         raise ValueError("扫描目标必须是目录")
     started = time.monotonic()
+    from scan_index import ScanIndex
+    index = ScanIndex(index_path) if index_path is not None else None
     totals = Counter()
     extensions = Counter()
     largest = []
@@ -118,6 +114,8 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
                                 else:
                                     stack.append((path, depth + 1))
                             elif stat.S_ISREG(info.st_mode):
+                                if index:
+                                    index.file(path, current, entry.name, info.st_size)
                                 identity = (info.st_dev, info.st_ino)
                                 if info.st_ino and info.st_nlink > 1:
                                     if identity in seen:
@@ -154,8 +152,11 @@ def scan(directory, top=20, progress=None, max_depth=None, max_seconds=None, max
         if current != root:
             totals[os.path.dirname(current)] += totals[current]
     directories = heapq.nlargest(top, ((totals[path], path) for path in visited if path != root))
+    if index:
+        index.finish((p, os.path.dirname(p) if p != root else None, totals[p]) for p in visited)
     return {
         "root": root, "status": "interrupted" if interrupted else "partial" if errors or links or depth_skipped or stop_reason else "complete",
+        "index_path": str(index_path) if index_path else None,
         "stop_reason": "user_cancelled" if interrupted else stop_reason,
         "max_depth": max_depth, "deepest_scanned": deepest,
         "depth_skipped_directories": depth_skipped,
@@ -199,8 +200,7 @@ table{{border-collapse:collapse;width:100%;font-size:14px}}td,th{{padding:12px;b
 <p>最深已扫描 {result.get('deepest_scanned', 0)} 层（根目录为 0）；深度限制跳过 {result.get('depth_skipped_directories', 0)} 个目录；待扫描 {result.get('pending_directories', 0)} 个目录；停止原因：{html.escape(result.get('stop_reason') or '正常结束')}。被跳过的目录大小未知，未计入总量。</p>
 <p>大小为可读取文件的逻辑字节数，不等于磁盘实际分配空间。目录大小包含子目录，排行各行不可相加。建议来自本地后缀规则，尚未接入 AI；不能作为删除许可。扫描过程中变化的文件可能造成统计偏差。</p></header>
 {interactive}
-<section>{table(result['largest_directories'], '大目录')}{table(result['largest_files'], '大文件')}{table(result['extensions'][:20], '文件类型占用')}</section>
-<section><h2>无法读取的位置（最多展示 50 项）</h2><ul>{issues or '<li>未记录读取错误</li>'}</ul></section></html>"""
+<section><details><summary>文件类型与读取错误</summary>{table(result['extensions'][:20], '文件类型占用')}<h3>无法读取的位置（最多 50 项）</h3><ul>{issues or '<li>未记录读取错误</li>'}</ul></details></section></html>"""
 
 
 def main():

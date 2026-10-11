@@ -1,4 +1,28 @@
-# 磁盘空间分析助手 / Disk Space Assistant v0.2.0
+# 磁盘空间分析助手 / Disk Space Assistant v0.6.0 Preview
+
+## 中文
+
+重做桌面界面：深色侧栏、浅色内容区、摘要卡片、默认目录总量页、明确的扫描范围提示和按盘符区分的彩色目录图。侧栏显示系统整盘用量，避免与文件逻辑总量混淆。
+
+包含从 v0.2.0 后新增的功能：客户端 AI 解释、全局会话 API 设置、DeepSeek Chat 兼容、密钥格式校验、选中项分批分析及进度、统一文件详情、名称/大小排序、SQLite 全文件索引与层级浏览、逐项确认回收站操作。
+
+旧报告可以导入，但缺失的完整索引需重新扫描。AI 请求需你确认摘要并配置服务；密钥不持久化。没有永久删除。回收功能只验证保护逻辑和依赖导入，未对个人文件执行。
+
+验证：28 项 Python 测试通过，1 项硬链接测试因环境限制跳过；导出页面的清单关联、分页、筛选与详情逻辑通过。完整鼠标交互及真实多批 API 尚未验证。
+
+## English
+
+Redesigned desktop UI with a dark sidebar, light content panels, overview cards, prominent scan scope, directory-first navigation and drive-specific colors. Sidebar system disk usage is distinct from scanned logical bytes.
+
+Includes integrated AI explanations, session-global API configuration, DeepSeek Chat support, key validation, selected-item batching/progress, unified details, sorting, a SQLite file index and hierarchical browser, and explicitly confirmed recycle-only actions.
+
+Old reports remain importable; missing full indexes require rescanning. Cloud requests require metadata confirmation and user-provided credentials. Keys are not persisted. No permanent deletion. Personal-file recycling, complete GUI interaction, live multi-batch AI and other-machine compatibility remain unverified.
+
+Checks: 28 Python tests passed, one environment-dependent hardlink test skipped; exported report association, pagination, search and details checks passed.
+
+---
+
+## v0.2.0 历史说明 / Historical notes
 
 新增可交互空间图：点击目录逐层查看，返回上级。清理候选支持按风险类别和路径筛选，展示判断依据和影响。保护系统/软件依赖/数据库路径，临时文件只作条件性建议。没有删除功能。新版本需重新扫描生成报告。
 

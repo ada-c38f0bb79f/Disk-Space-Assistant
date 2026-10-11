@@ -1,54 +1,39 @@
 # Disk Space Assistant
 
-[简体中文](README.md)
+[简体中文](README.md) · [Windows preview v0.6.0](https://github.com/ada-c38f0bb79f/Disk-Space-Assistant/releases/tag/v0.6.0)
 
-A local disk space analyzer for any drive or folder. Find large files, directory totals and file-type usage, and generate an HTML report. Includes Windows desktop and command-line applications.
+A Windows desktop disk space analyzer with directory totals, hierarchical browsing, colored usage charts, optional cloud AI explanations and user-confirmed recycling.
 
-**v0.2.0 MVP: read-only scanning, interactive space maps and cleanup candidates. AI explanations are planned.**
+## Workflow
 
-## Download
+Extract and launch `DiskSpaceAssistant.exe`; Python is not required.
 
-[Windows portable release](https://github.com/ada-c38f0bb79f/agent-runtime-research/releases/tag/v0.2.0)
+1. Select a drive and scan it, or choose a folder. A highlighted scope banner distinguishes a whole drive from a folder such as `C:\Users`.
+2. Overview cards show scanned logical bytes, file count, read errors and AI coverage. The sidebar shows current system disk usage, which uses a different measurement.
+3. Browse directories and file pages (100 entries per page) through a local SQLite index. Click headings to sort by name or size. Colors vary by drive and subdirectory.
+4. Select 1–20 files for AI analysis. Global API settings are shared within the current session. Requests process up to five items per batch; completed results survive later failures.
+5. Import earlier HTML reports or export results. Missing detail in old reports requires rescanning.
 
-Extract and launch `DiskSpaceAssistant.exe`. Select a folder and report destination, then open the report after scanning. No Python installation is required. `DiskSpaceAssistantCLI.exe` is the command-line version.
+## AI and recycling
 
-Built for Windows x64 and unsigned. Desktop interaction and compatibility on other machines have not yet been verified. The current interface and reports are in Chinese; English documentation is provided here.
+`chat` supports compatible Chat Completions services such as DeepSeek and provides unsearched inference. `search` requires Responses `web_search` support and retains actual citations. Models must be available to your account.
 
-## Features
+Requests require confirmation of a redacted metadata preview; filenames/context can still contain personal information. File contents are not uploaded. API/search may incur charges. Keys remain in session memory, are not written to disk, and are validated for invalid characters.
 
-- Interactive directory drill-down and parent navigation.
-- Cleanup candidates filtered by category/path, with evidence and possible impact; no deletion approval or action.
+Recycle one file only after explicit confirmation. Protected/unknown items, directories, links, changed-size files and non-fixed local drives are rejected. No permanent-delete fallback. Recycling has not been exercised on personal files and may not immediately release disk space. AI explanations do not prove deletion safety. Rescan after changes.
 
-- Read-only iterative traversal, avoiding Python recursion limits.
-- Windows extended paths; symbolic links and reparse points are skipped.
-- Largest files/directories, extension totals and hardlink deduplication.
-- Optional depth, time and file limits; HTML/JSON reports and access-error records.
-- Desktop folder selection, progress updates and report opening.
+## Development
 
-## Run from source
-
-Python 3.10+ and the standard library. Desktop mode also requires Tkinter.
+Python 3.10+ with Tkinter. Windows recycling requires Send2Trash and pywin32.
 
 ```powershell
+python -m pip install -r requirements.txt
 python disk_assistant_desktop.py
 python disk_assistant.py D:/ --report report-d.html
-python disk_assistant.py D:/ --max-depth 4 --max-seconds 60 --max-files 100000 --report preview-d.html
-python disk_assistant.py "C:\Users" --json report-users.json
-python -m unittest -v test_disk_assistant
+python -m unittest -v test_disk_assistant test_cloud_analysis test_file_records test_scan_index test_desktop_theme
+node test_report_visual.js
 ```
 
-Use a new report filename; existing files are not overwritten. Root depth is 0 and traversal is unlimited by default. Ctrl+C retains partial statistics in the CLI. Closing the desktop window ends scanning without saving unfinished results.
+Sizes are logical bytes, not allocated space. Parent totals include children. Permissions, skipped links, limits and changing files can cause incomplete results. Deadlines cannot interrupt blocked filesystem calls.
 
-## Measurement and limitations
-
-Sizes are logical file bytes, not physical allocated space. Parent totals include children; directory-ranking rows must not be added. Permissions, limits, skipped links and changing files can make results incomplete. Time limits cannot interrupt a blocked filesystem call. Memory grows with visited and pending directories.
-
-Extension-based suggestions are not deletion approval. The application does not delete files, read their contents or send data over the network. Reports contain local paths and should be treated as personal information.
-
-## Verification and roadmap
-
-Scanner tests: 12 passed, 1 hardlink test skipped due to the build environment. Coverage includes a simulated 1,500-level hierarchy, link cycles, totals, read failures, scan limits, directory maps, protected paths and HTML escaping.
-
-Next: AI explanations based on reviewed, redacted summaries, followed by user-confirmed cleanup.
-
-This repository now maintains the disk space analyzer. Earlier research documents were removed from the current branch and remain recoverable in Git history. See [release notes](RELEASE_NOTES.md).
+Unsigned preview. Full GUI interaction, live multi-batch API calls and other-machine compatibility remain unverified. Interface/reports currently use Chinese; this document provides English guidance. Personal reports and indexes are excluded from Git. See [release notes](RELEASE_NOTES.md).
